@@ -333,6 +333,12 @@ public:
     
     size_t index = pos - begin();
     
+    template <typename... Args>
+iterator Emplace(const_iterator pos, Args&&... args) {
+    assert(pos >= begin() && pos <= end());
+    
+    size_t index = pos - begin();
+    
     if (size_ < data_.Capacity()) {
         if (index == size_) {
             new (data_ + size_) T(std::forward<Args>(args)...);
@@ -340,13 +346,15 @@ public:
         } else {
             T tmp(std::forward<Args>(args)...);
             new (data_ + size_) T(std::move(data_[size_ - 1]));
+            
             for (size_t i = size_ - 1; i > index; --i) {
                 data_[i] = std::move(data_[i - 1]);
             }
-            data_[index] = std::move(tmp);
+            T* insert_pos = data_ + index;
+            *insert_pos = std::forward<T>(tmp);
             ++size_;
         }
-    } else {
+    }  else {
             size_t new_capacity = data_.Capacity() == 0 ? 1 : data_.Capacity() * 2;
             RawMemory<T> new_data(new_capacity);
 
